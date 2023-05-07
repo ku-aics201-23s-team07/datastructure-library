@@ -1,3 +1,4 @@
+import json
 from avl_tree import module
 
 locations = [
@@ -22,6 +23,11 @@ locations = [
                 "id": "scooter002",
                 "battery": 50,
                 "repair": False
+            },
+                        {
+                "id": "scooter002",
+                "battery": 50,
+                "repair": True
             }
         ]
     },
@@ -42,39 +48,56 @@ locations = [
         "latitude": 36.60913903276567,
         "longitude": 127.28358476879771,
         "scooters": [
-            {
-                "id": "scooter004",
-                "battery": 100,
-                "repair": False
-            }
         ]
     }
 ]
 
-avl_tree = module.AVLTree()
+#장소 필터링
+processed_locations = []
 
 for location in locations:
-    avl_tree.insert(location)
+    scooters = location['scooters']
+    num_scooters = len(scooters)
 
+    # scooter 정보가 없거나 모든 scooter의 repair 값이 True인 경우 제외
+    if num_scooters == 0 or all(scooter['repair'] for scooter in scooters):
+        continue
+
+    processed_locations.append(location)
+
+locations = processed_locations
+
+#AVL-Tree 초기화
+location_avl_tree = module.LocationAVLTree()
+
+for location in locations:
+    location_avl_tree.insert(location)
+
+#AVL-Tree에서 이름으로 Node찾기
+search_result_node = location_avl_tree.search("신정문 주차장")
+print("=============== found node =================")
+print(f"location: {search_result_node.location}")
+print(f"scooters: {search_result_node.scooters}")
+
+#AVL-Tree를 이용해 가장 가까운 그룹 찾기
 target_location = {
     "latitude": 36.60857621133895,
     "longitude": 127.28904846065954
 }
 
-nearest_scooter = None
 nearest_location = None
 min_distance = float('inf')
 
 for location in locations:
-    distance = avl_tree._distance(location, target_location)
+    distance = location_avl_tree._distance(location, target_location)
     if distance < min_distance:
-        for scooter in location['scooters']:
-            if not scooter['repair']:
-                nearest_scooter = scooter
-                nearest_location = location
-                min_distance = distance
+        min_distance = distance
+        nearest_location = location
 
-if nearest_scooter:
-    print(f"The nearest scooter is {nearest_scooter['id']} in {nearest_location['name']} width {nearest_scooter['battery']}% battery")
-else:
+print("============ nearest location ==============")
+if nearest_location == None:
     print("No available scooter found.")
+print(f"The nearest location is {nearest_location['name']} with {min_distance}m")
+print("============================================")
+
+location_avl_tree.visualize()
