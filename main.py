@@ -116,23 +116,16 @@ target_location = {
     "longitude": 127.28904846065954
 }
 
-nearest_location = None
-min_distance = float('inf')
-
-for location in locations:
-    distance = location_avl_tree._distance(location, target_location)
-    if distance < min_distance:
-        min_distance = distance
-        nearest_location = location
+nearest_location = location_avl_tree.find_nearest_location(target_location)
 
 print("============ nearest location ==============")
 if nearest_location == None:
     print("No available scooter found.")
-print(f"The nearest location is {nearest_location['name']} with {min_distance}m")
+print(f"The nearest location is {nearest_location[0].locationName} with {nearest_location[1]}m")
 print("============================================")
 
 # 배터리상태가 가장 좋고 수리가 필요없는 scooter를 찾기
-scooters_heap = heap_queue_module.build_heap(nearest_location['scooters'])
+scooters_heap = heap_queue_module.build_heap(nearest_location[0].scooters)
 
 max_battery_scooter = None
 for scooter in scooters_heap:

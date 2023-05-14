@@ -95,3 +95,23 @@ class LocationAVLTree:
         if location1 is None or location2 is None:
             return float('inf')
         return haversine((location1['latitude'], location1['longitude']), (location2['latitude'], location2['longitude']), unit="m")
+    
+    def find_nearest_location(self, user_location):
+        nearest_location = None
+        min_distance = float('inf')
+
+        stack = []
+        curr = self.root
+        while stack or curr:
+            if curr:
+                stack.append(curr)
+                curr = curr.left
+            else:
+                curr = stack.pop()
+                distance = self._distance(curr.location, user_location)
+                if distance < min_distance:
+                    min_distance = distance
+                    nearest_location = curr
+                curr = curr.right
+
+        return nearest_location, min_distance
