@@ -1,9 +1,9 @@
 import math
 from haversine import haversine
-from graphviz import Digraph
 
 class LocationAVLNode:
     def __init__(self, inputData):
+        self.locationId = inputData['location_id']
         self.locationName = inputData['name']
         self.location = { 
             "latitude": inputData['latitude'], 
@@ -42,18 +42,18 @@ class LocationAVLTree:
         node.height = max(self._height(node.left), self._height(node.right)) + 1
         return node
     
-    def search(self, name):
-        return self._search(self.root, name)
+    def search(self, locationId):
+        return self._search(self.root, locationId)
 
-    def _search(self, node, name):
+    def _search(self, node, locationId):
         if node is None:
             return None
-        if node.locationName == name:
+        if node.locationId == locationId:
             return node
-        elif name < node.locationName:
-            return self._search(node.left, name)
+        elif locationId < node.locationId:
+            return self._search(node.left, locationId)
         else:
-            return self._search(node.right, name)
+            return self._search(node.right, locationId)
 
     def _height(self, node):
         if node is None:
@@ -95,25 +95,3 @@ class LocationAVLTree:
         if location1 is None or location2 is None:
             return float('inf')
         return haversine((location1['latitude'], location1['longitude']), (location2['latitude'], location2['longitude']), unit="m")
-    
-    def _visualize(self, node, dot):
-        if node is None:
-            return
-
-        dot.node(str(id(node)), str(node.locationName))
-
-        if node.left is not None:
-            dot.edge(str(id(node)), str(id(node.left)), label="L")
-            self._visualize(node.left, dot)
-
-        if node.right is not None:
-            dot.edge(str(id(node)), str(id(node.right)), label="R")
-            self._visualize(node.right, dot)
-
-    def visualize(self):
-        try:
-            dot = Digraph()
-            self._visualize(self.root, dot)
-            dot.render('tree.gv', view=True)
-        except Exception as ex:
-            print(ex)
