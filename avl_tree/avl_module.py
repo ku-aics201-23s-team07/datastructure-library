@@ -49,7 +49,11 @@ class LocationAVLTree:
         if node is None:
             return None
         if node.locationId == locationId:
-            return node
+            tempNode = node
+            delattr(tempNode, "left")
+            delattr(tempNode, "right")
+            delattr(tempNode, "height")
+            return tempNode
         elif locationId < node.locationId:
             return self._search(node.left, locationId)
         else:
@@ -114,4 +118,7 @@ class LocationAVLTree:
                     nearest_location = curr
                 curr = curr.right
 
+        delattr(nearest_location, "left")
+        delattr(nearest_location, "right")
+        delattr(nearest_location, "height")
         return nearest_location, min_distance

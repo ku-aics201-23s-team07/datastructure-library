@@ -1,6 +1,6 @@
 ## AVL-Tree Libiray
 - Github push date
-  - 2023-05-07 (PM 10)
+  - 2023-05-16
 - Development Team
   - Minse Kim, Hajun Myung, Park Min-chan\
 - Presentation Team
