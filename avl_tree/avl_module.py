@@ -1,5 +1,6 @@
 import math
 from haversine import haversine
+from graphviz import Digraph
 
 class LocationAVLNode:
     def __init__(self, inputData):
@@ -24,22 +25,64 @@ class LocationAVLTree:
     def _insert(self, node, location):
         if node is None:
             node = LocationAVLNode(location)
-        elif location['name'] < node.locationName:
+        elif location['location_id'] < node.locationId:
             node.left = self._insert(node.left, location)
             if self._height(node.left) - self._height(node.right) == 2:
-                if location['name'] < node.left.locationName:
+                if location['location_id'] < node.left.locationId:
                     node = self._rotate_right(node)
                 else:
                     node = self._rotate_left_right(node)
-        elif location['name'] > node.locationName:
+        elif location['location_id'] > node.locationId:
             node.right = self._insert(node.right, location)
             if self._height(node.right) - self._height(node.left) == 2:
-                if location['name'] > node.right.locationName:
+                if location['location_id'] > node.right.locationId:
                     node = self._rotate_left(node)
                 else:
                     node = self._rotate_right_left(node)
 
         node.height = max(self._height(node.left), self._height(node.right)) + 1
+        return node
+    
+    def delete(self, locationId):
+        self.root = self._delete(self.root, locationId)
+
+    def _delete(self, node, locationId):
+        if node is None:
+            return None
+
+        if locationId < node.locationId:
+            node.left = self._delete(node.left, locationId)
+        elif locationId > node.locationId:
+            node.right = self._delete(node.right, locationId)
+        else:
+            if node.left is None:
+                return node.right
+            elif node.right is None:
+                return node.left
+            else:
+                successor = self._find_minimum(node.right)
+                node.locationId = successor.locationId
+                node.locationName = successor.locationName
+                node.location = successor.location
+                node.scooters = successor.scooters
+                node.right = self._delete(node.right, successor.locationId)
+
+        node.height = max(self._height(node.left), self._height(node.right)) + 1
+
+        balance = self._get_balance(node)
+        if balance > 1:
+            if self._get_balance(node.left) >= 0:
+                return self._rotate_right(node)
+            else:
+                node.left = self._rotate_left(node.left)
+                return self._rotate_right(node)
+        elif balance < -1:
+            if self._get_balance(node.right) <= 0:
+                return self._rotate_left(node)
+            else:
+                node.right = self._rotate_right(node.right)
+                return self._rotate_left(node)
+
         return node
     
     def search(self, locationId):
@@ -49,25 +92,27 @@ class LocationAVLTree:
         if node is None:
             return None
         if node.locationId == locationId:
-            tempNode = node
-            delattr(tempNode, "left")
-            delattr(tempNode, "right")
-            delattr(tempNode, "height")
-            return tempNode
+            return node
         elif locationId < node.locationId:
             return self._search(node.left, locationId)
         else:
             return self._search(node.right, locationId)
 
+    def _find_minimum(self, node):
+        current = node
+        while current.left is not None:
+            current = current.left
+        return current
+
+    def _get_balance(self, node):
+        if node is None:
+            return 0
+        return self._height(node.left) - self._height(node.right)
+
     def _height(self, node):
         if node is None:
             return 0
         return node.height
-
-    def _balance(self, node):
-        if node is None:
-            return 0
-        return self._height(node.left) - self._height(node.right)
 
     def _rotate_right(self, node):
         left_child = node.left
@@ -86,7 +131,7 @@ class LocationAVLTree:
         node.height = 1 + max(self._height(node.left), self._height(node.right))
         right_child.height = 1 + max(self._height(right_child.left), self._height(right_child.right))
         return right_child
-    
+
     def _rotate_left_right(self, node):
         node.left = self._rotate_left(node.left)
         return self._rotate_right(node)
@@ -118,7 +163,26 @@ class LocationAVLTree:
                     nearest_location = curr
                 curr = curr.right
 
-        delattr(nearest_location, "left")
-        delattr(nearest_location, "right")
-        delattr(nearest_location, "height")
         return nearest_location, min_distance
+    
+    def _visualize(self, node, dot):
+        if node is None:
+            return
+
+        dot.node(str(id(node)), str(node.locationId))
+
+        if node.left is not None:
+            dot.edge(str(id(node)), str(id(node.left)), label="L")
+            self._visualize(node.left, dot)
+
+        if node.right is not None:
+            dot.edge(str(id(node)), str(id(node.right)), label="R")
+            self._visualize(node.right, dot)
+
+    def visualize(self):
+        try:
+            dot = Digraph()
+            self._visualize(self.root, dot)
+            return dot
+        except Exception as ex:
+            print(ex)
